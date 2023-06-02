@@ -5,18 +5,28 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import androidx.biometric.BiometricPrompt;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     ListView lv;
     ArrayList<Category> categoriesList;
@@ -29,12 +39,47 @@ public class MainActivity extends AppCompatActivity {
 
     ConstraintLayout mMainLayout;
 
+    private Button buttonSignUp;
+    private Button buttonSignIn;
+
+    private Button customButtonSignUp;
+    private Button customButtonSignIn;
+
+    private EditText customEditTextEmail, customEditTextPassword;
+    Dialog d, d1;
+    int mode = 0;// 0 = Sign up, 1 = Sign in
+    ProgressDialog progressDialog;
+    private FirebaseAuth firebaseAuth;
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        // Check if user is signed in (non-null) and update UI accordingly.
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        //updateUI(currentUser);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        firebaseAuth = FirebaseAuth.getInstance();
+
         lv = (ListView)findViewById(R.id.lv);
+
+        buttonSignUp = findViewById(R.id.buttonSignUp);
+        buttonSignUp.setOnClickListener(this);
+        buttonSignIn = findViewById(R.id.buttonSignIn);
+        buttonSignIn.setOnClickListener(this);
+        progressDialog= new ProgressDialog(this);
+
+        FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+        if(firebaseUser!=null)
+            buttonSignIn.setText("Logout");
+        else
+            buttonSignIn.setText("Log In");
+
 
         executor = ContextCompat.getMainExecutor(this);
         biometricPrompt = new BiometricPrompt(MainActivity.this,
@@ -66,9 +111,9 @@ public class MainActivity extends AppCompatActivity {
         });
 
         promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Biometric login for my app")
-                .setSubtitle("Log in using your biometric credential")
-                .setNegativeButtonText("Use account password")
+                .setTitle("Authentication login")
+                .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
+                //.setNegativeButtonText("Use account password")
                 .build();
 
         biometricPrompt.authenticate(promptInfo);
@@ -102,4 +147,100 @@ public class MainActivity extends AppCompatActivity {
         lv=(ListView)findViewById(R.id.lv);
         lv.setAdapter(categoriesAdapter);
     }
+
+    @Override
+    public void onClick(View v) {
+        if(v==buttonSignUp){
+            createRegisterDialog();
+        }
+        else if (v==customButtonSignUp) {
+            register();
+        }
+        else if (v==buttonSignIn) {
+            if(buttonSignIn.getText().toString().equals("Log In"))
+                createLogInDialog();
+            else if (buttonSignIn.getText().toString().equals("Logout")) {
+                firebaseAuth.signOut();
+                buttonSignIn.setText("Log In");
+            }
+        } else if(v==customButtonSignIn) {
+            login();
+
+        }
+
+    }
+
+
+
+    private void createLogInDialog() {
+        d1 = new Dialog(this,android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        d1.setContentView(R.layout.signin_layout);
+        d1.setTitle("Sign In");
+        d1.setCancelable(true);
+        customEditTextPassword=(EditText) d1.findViewById(R.id.customEditTextPassword);
+        customEditTextEmail=(EditText) d1.findViewById(R.id.customEditTextEmail);
+        customButtonSignIn=(Button) d1.findViewById(R.id.customButtonSignIn);
+        customButtonSignIn.setOnClickListener(this);
+        d1.show();
+    }
+
+    public void createRegisterDialog(){
+        d = new Dialog(this,android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        d.setContentView(R.layout.signup_layout);
+        d.setTitle("Sign Up");
+        d.setCancelable(true);
+        customEditTextPassword=(EditText) d.findViewById(R.id.customEditTextPassword);
+        customEditTextEmail=(EditText) d.findViewById(R.id.customEditTextEmail);
+        customButtonSignUp=(Button) d.findViewById(R.id.customButtonSignUp);
+        customButtonSignUp.setOnClickListener(this);
+        mode=0;
+        d.show();
+    }
+
+    private void register() {
+
+        progressDialog.setMessage("Registering Please Wait...");
+        progressDialog.show();
+        firebaseAuth.createUserWithEmailAndPassword(customEditTextEmail.getText().toString(),customEditTextPassword.getText().toString()).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+
+            @Override
+            public void onComplete(Task<AuthResult> task) {
+                if (task.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Successfully registered", Toast.LENGTH_LONG).show();
+                    buttonSignIn.setText("Logout");
+
+                } else {
+                    Toast.makeText(MainActivity.this, "Registration Error", Toast.LENGTH_LONG).show();
+                }
+
+                d.dismiss();
+                progressDialog.dismiss();
+
+            }
+        });
+    }
+
+    private void login() {
+        progressDialog.setMessage("Registering Please Wait...");
+        progressDialog.show();
+
+        firebaseAuth.signInWithEmailAndPassword(customEditTextEmail.getText().toString(), customEditTextPassword.getText().toString())
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if(task.isSuccessful()){
+                            Toast.makeText(MainActivity.this, "Log in successfully", Toast.LENGTH_SHORT).show();
+                            buttonSignIn.setText("Logout");
+                        }
+                        else {
+                            Toast.makeText(MainActivity.this, "Log in failed", Toast.LENGTH_SHORT).show();
+                        }
+                        d1.dismiss();
+                        progressDialog.dismiss();
+                    }
+
+
+                });
+    }
+
 }
