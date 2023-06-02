@@ -1,6 +1,8 @@
 package com.project.passlock;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.ActionBarDrawerToggle;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
@@ -9,7 +11,16 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import androidx.biometric.BiometricPrompt;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.navigation.NavController;
+import androidx.navigation.Navigation;
+import androidx.navigation.ui.AppBarConfiguration;
+import androidx.navigation.ui.NavigationUI;
+
 import android.os.Bundle;
+import android.os.Handler;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -19,9 +30,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.navigation.NavigationView;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 import java.util.ArrayList;
 import java.util.concurrent.Executor;
@@ -45,11 +61,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button customButtonSignUp;
     private Button customButtonSignIn;
 
-    private EditText customEditTextEmail, customEditTextPassword;
+    private EditText customEditTextEmail, customEditTextPassword, customEditTextFirstName, customEditTextLastName;
+    FirebaseDatabase firebaseDatabase;
+    DatabaseReference userRef;
     Dialog d, d1;
     int mode = 0;// 0 = Sign up, 1 = Sign in
     ProgressDialog progressDialog;
     private FirebaseAuth firebaseAuth;
+
+    private AppBarConfiguration mAppBarConfiguration;
+    private ActivityMenuDrawerBinding binding;
+
 
     @Override
     public void onStart() {
@@ -65,8 +87,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
 
         firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseDatabase.getInstance("https://paock-2a77c-default-rtdb.europe-west1.firebasedatabase.app");
+        firebaseDatabase = FirebaseDatabase.getInstance();
 
-        lv = (ListView)findViewById(R.id.lv);
+        /*binding = ActivityMenuDrawerBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        setSupportActionBar(binding.appBarMenuDrawer.toolbar);
+        binding.appBarMenuDrawer.fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
+            }
+        });
+        DrawerLayout drawer = binding.drawerLayout;
+        NavigationView navigationView = binding.navView;
+        // Passing each menu ID as a set of Ids because each
+        // menu should be considered as top level destinations.
+        mAppBarConfiguration = new AppBarConfiguration.Builder(
+                R.id.nav_home, R.id.nav_gallery, R.id.nav_slideshow)
+                .setOpenableLayout(drawer)
+                .build();
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_drawer);
+        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+        NavigationUI.setupWithNavController(navigationView, navController);*/
+
+
+    lv = (ListView)findViewById(R.id.lv);
 
         buttonSignUp = findViewById(R.id.buttonSignUp);
         buttonSignUp.setOnClickListener(this);
@@ -191,6 +239,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         d.setCancelable(true);
         customEditTextPassword=(EditText) d.findViewById(R.id.customEditTextPassword);
         customEditTextEmail=(EditText) d.findViewById(R.id.customEditTextEmail);
+        customEditTextFirstName=(EditText) d.findViewById(R.id.customEditTextFirstName);
+        customEditTextLastName=(EditText) d.findViewById(R.id.customEditTextLastName);
         customButtonSignUp=(Button) d.findViewById(R.id.customButtonSignUp);
         customButtonSignUp.setOnClickListener(this);
         mode=0;
@@ -205,14 +255,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onComplete(Task<AuthResult> task) {
+
                 if (task.isSuccessful()) {
                     Toast.makeText(MainActivity.this, "Successfully registered", Toast.LENGTH_LONG).show();
                     buttonSignIn.setText("Logout");
-
+                    addUserDetails();
                 } else {
                     Toast.makeText(MainActivity.this, "Registration Error", Toast.LENGTH_LONG).show();
-                }
 
+                }
                 d.dismiss();
                 progressDialog.dismiss();
 
@@ -243,4 +294,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 });
     }
 
+    public void addUserDetails(){
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
+
+        User user = new User(uid,customEditTextEmail.getText().toString(),customEditTextFirstName.getText().toString(),customEditTextLastName.getText().toString(),"");
+        userRef = firebaseDatabase.getReference("Users").push();
+        user.key = userRef.getKey();
+        userRef.setValue(user);
+
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.menu_drawer, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onSupportNavigateUp() {
+        NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_drawer);
+        return NavigationUI.navigateUp(navController, mAppBarConfiguration)
+                || super.onSupportNavigateUp();
+    }
 }

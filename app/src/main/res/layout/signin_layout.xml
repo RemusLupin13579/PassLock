@@ -6,6 +6,12 @@
     android:padding="16dp"
     android:background="#B3C0FF">
 
+    <ImageView
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:layout_gravity="center"
+        android:background="@drawable/biglogo"/>
+
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
