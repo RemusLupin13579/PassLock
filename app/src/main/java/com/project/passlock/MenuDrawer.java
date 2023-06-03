@@ -18,7 +18,7 @@ import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 public class MenuDrawer extends AppCompatActivity {
 
-    /*private AppBarConfiguration mAppBarConfiguration;
+    private AppBarConfiguration mAppBarConfiguration;
     private ActivityMenuDrawerBinding binding;
 
     @Override
@@ -61,5 +61,5 @@ public class MenuDrawer extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_drawer);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
-    }*/
+    }
 }
