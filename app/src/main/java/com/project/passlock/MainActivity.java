@@ -2,6 +2,7 @@ package com.project.passlock;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ClipData;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
@@ -11,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -31,8 +33,11 @@ import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 import java.util.ArrayList;
@@ -68,6 +73,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMenuDrawerBinding binding;
 
+    TextView textViewUserName;
+    private String userFirstName;
+
 
     @Override
     public void onStart() {
@@ -85,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseDatabase.getInstance("https://paock-2a77c-default-rtdb.europe-west1.firebasedatabase.app");
         firebaseDatabase = FirebaseDatabase.getInstance();
-
+        supportInvalidateOptionsMenu();
 
         lv = (ListView) findViewById(R.id.lv);
 
@@ -95,11 +103,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         buttonSignIn.setOnClickListener(this);
         progressDialog = new ProgressDialog(this);
 
+        textViewUserName = findViewById(R.id.user_name);
+
         FirebaseUser firebaseUser = firebaseAuth.getCurrentUser();
+
+        DatabaseReference myRef = firebaseDatabase.getReference("firstname");
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                String name = snapshot.getValue(String.class);
+                textViewUserName.setText("Hello, " + name);
+                Toast.makeText(MainActivity.this, name+" Successfully reading from firebase", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(MainActivity.this, "Error while reading from firebase", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        if (firebaseUser == null) {
+            textViewUserName.setText("Guest");
+        }
+
         if (firebaseUser != null)
             buttonSignIn.setText("Logout");
         else
             buttonSignIn.setText("Log In");
+
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -108,6 +139,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 int id = item.getItemId();
                 if (id == R.id.nav_home) {
                     Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
+                }
+                if(id == R.id.nav_login){
+                    if (item.getTitle().equals("Login")) {
+                        item.setTitle("Logout");
+                        item.setIcon(R.drawable.baseline_logout_24);
+                        createLogInDialog();
+                    }
+                    else if (item.getTitle().equals("Logout")) {
+                        firebaseAuth.signOut();
+                        item.setTitle("Login");
+                    }
+                }
+                if(id == R.id.nav_signup){
+                    createRegisterDialog();
                 }
                 DrawerLayout drawerLayout = findViewById(R.id.nav_drawer_layout);
                 drawerLayout.closeDrawer(GravityCompat.START);
@@ -184,6 +229,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         lv = (ListView) findViewById(R.id.lv);
         lv.setAdapter(categoriesAdapter);
     }
+
+
 
     @Override
     public void onClick(View v) {
@@ -265,6 +312,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
+
                         if (task.isSuccessful()) {
                             Toast.makeText(MainActivity.this, "Log in successfully", Toast.LENGTH_SHORT).show();
                             buttonSignIn.setText("Logout");
@@ -287,6 +335,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         user.key = userRef.getKey();
         userRef.setValue(user);
 
+        userFirstName = customEditTextFirstName.getText().toString();
+
     }
 
     @Override
@@ -297,21 +347,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // You can modify the menu items here before they are shown
+        // For example, you can change the title or visibility of menu items based on certain conditions
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser != null) {
+            // User is logged in, change the title or visibility of a menu item
+            MenuItem menuItem = menu.findItem(R.id.nav_login);
+            menuItem.setTitle("Logout");
+        }
+        else{
+            MenuItem menuItem = menu.findItem(R.id.nav_login);
+            menuItem.setTitle("Login");
+        }
+
+        // Return true to display the modified menu
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+    @Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_drawer);
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
 
-
-    /*@Override
-    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        int id = item.getItemId();
-        if (id == R.id.nav_home) {
-            Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
-        }
-        DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
-        drawerLayout.closeDrawer(GravityCompat.START);
-        return true;
-    }*/
 }

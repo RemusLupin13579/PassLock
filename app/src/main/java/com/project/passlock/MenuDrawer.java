@@ -1,6 +1,7 @@
 package com.project.passlock;
 
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 
@@ -14,17 +15,19 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 public class MenuDrawer extends AppCompatActivity {
 
-    private AppBarConfiguration mAppBarConfiguration;
+   private AppBarConfiguration mAppBarConfiguration;
     private ActivityMenuDrawerBinding binding;
-
+    private FirebaseAuth firebaseAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        firebaseAuth = FirebaseAuth.getInstance();
         binding = ActivityMenuDrawerBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
