@@ -113,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 String name = snapshot.getValue(String.class);
                 textViewUserName.setText("Hello, " + name);
-                Toast.makeText(MainActivity.this, name+" Successfully reading from firebase", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(MainActivity.this, name+" Successfully reading from firebase", Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -153,6 +153,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
                 if(id == R.id.nav_signup){
                     createRegisterDialog();
+                }
+                if(id == R.id.nav_passGenerator){
+                    Intent intent = new Intent(MainActivity.this, PasswordGenerator.class);
+                    startActivity(intent);
                 }
                 DrawerLayout drawerLayout = findViewById(R.id.nav_drawer_layout);
                 drawerLayout.closeDrawer(GravityCompat.START);
