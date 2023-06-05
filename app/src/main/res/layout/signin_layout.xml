@@ -46,4 +46,16 @@
         android:textSize="16sp"
         android:textStyle="bold"/>
 
+    <TextView
+        android:id="@+id/tvNewRegister"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"
+        android:text="Tap here to create a new account"
+        android:textAllCaps="false"
+        android:textColor="#0F3F9F"
+        android:textSize="18dp"
+        android:textStyle="bold|italic"></TextView>
+
 </LinearLayout>

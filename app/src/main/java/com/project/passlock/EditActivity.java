@@ -3,6 +3,7 @@ package com.project.passlock;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.provider.MediaStore;
@@ -16,9 +17,6 @@ public class EditActivity extends AppCompatActivity implements View.OnClickListe
 
     EditText etTitle;
     Button btnSave,btnCancel;
-    ImageView ivCategory;
-    Bitmap bitmap;
-    Button btnTakePic;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,18 +29,13 @@ public class EditActivity extends AppCompatActivity implements View.OnClickListe
         btnCancel=(Button)findViewById(R.id.btnCancel);
         btnSave.setOnClickListener(this);
         btnCancel.setOnClickListener(this);
-        ivCategory=(ImageView)findViewById(R.id.ivCategory);
 
-        btnTakePic=(Button)findViewById(R.id.btnPic);
-        btnTakePic.setOnClickListener(this);
         //connect to intent if its edit mode
         Intent intent=getIntent();
         if(intent.getExtras()!=null)
         {
             String title = intent.getExtras().getString("title");
-            bitmap = Helper.byteArrayToBitmap(intent.getExtras().getByteArray("icon"));
             etTitle.setText(title);
-            ivCategory.setImageBitmap(bitmap);
         }
     }
 
@@ -54,26 +47,18 @@ public class EditActivity extends AppCompatActivity implements View.OnClickListe
         {
             if(resultCode==RESULT_OK)
             {
-                bitmap = (Bitmap)data.getExtras().get("data");
-                if(bitmap!=null)
-                    ivCategory.setImageBitmap(bitmap);
+                Toast.makeText(this,"Result",Toast.LENGTH_LONG).show();
             }
         }
     }
 
     @Override
     public void onClick(View v) {
-        if(btnTakePic==v)//option 1 - take new picture
+        if(btnSave==v)//option 2 - save the data and go to first screen
         {
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(intent,0);
-        }
-        else if(btnSave==v)//option 2 - save the data and go to first screen
-        {
-            if(etTitle.getText().toString().length()>0&&bitmap!=null) {
+            if(etTitle.getText().toString().length()>0) {
                 Intent intent = new Intent();
                 intent.putExtra("title", etTitle.getText().toString());
-                intent.putExtra("bitmap", Helper.bitmapToByteArray(bitmap));
                 setResult(RESULT_OK, intent);
                 finish();
             }
