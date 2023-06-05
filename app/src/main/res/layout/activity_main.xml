@@ -9,7 +9,7 @@
     android:fitsSystemWindows="true"
     tools:openDrawer="left"
     android:orientation="vertical"
-    android:background="#C7E7F1">
+    android:background="#C6CEFF">
 
         <TextView
             android:id="@+id/user_name"

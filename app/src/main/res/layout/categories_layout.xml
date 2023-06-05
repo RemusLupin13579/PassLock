@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:paddingTop="20dp"
-    android:paddingBottom="20dp">
+    android:paddingBottom="20dp"
+    android:background="#B3C0FF">
 <LinearLayout
 
     android:layout_width="wrap_content"
@@ -13,8 +14,8 @@
     android:orientation="horizontal">
     <ImageView
         android:id="@+id/ivCategory"
-        android:layout_width="60dp"
-        android:layout_height="60dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         app:srcCompat="?attr/actionModeCopyDrawable" />
 
     <LinearLayout
@@ -31,7 +32,7 @@
             android:fontFamily="@font/arbutus_slab"
             android:text="title"
             android:textColor="#106B77"
-            android:textSize="40dp" />
+            android:textSize="35dp" />
 
 
     </LinearLayout>
