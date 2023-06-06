@@ -15,6 +15,7 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
@@ -28,6 +29,8 @@ import com.google.firebase.database.ValueEventListener;
 import java.util.ArrayList;
 
 public class PasswordsActivity extends AppCompatActivity implements View.OnClickListener {
+
+    private String categoryName;
     ListView lv;
     ArrayList<Password> passwordsList;
     PasswordAdapter passwordsAdapter;
@@ -36,12 +39,20 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
 
     DatabaseReference firebaseDatabase;
     int itemPosition;
+    int selectedPosition;
+    TextView tvCategory;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_passwords);
+        setContentView(R.layout.nav_activity_passwords);
 
+        // Get the category name from the intent
+        categoryName = getIntent().getStringExtra("categoryName");
+        itemPosition = getIntent().getIntExtra("position", -1);
+
+        tvCategory = (TextView) findViewById(R.id.tvCategory);
+        tvCategory.setText(categoryName);
         firebaseDatabase = FirebaseDatabase.getInstance().getReference();
 
         floatingActionButton = findViewById(R.id.fab);
@@ -55,7 +66,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                 Intent intent = new Intent(PasswordsActivity.this, PasswordEditActivity.class);
                 intent.putExtra("title", lastSelected.getTitle());
                 intent.putExtra("password", lastSelected.getPassword());
-                intent.putExtra("position", position);
+                intent.putExtra("passPosition", position);
                 startActivityForResult(intent, 0);
 
             }
@@ -65,22 +76,12 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View view, int position, long id) {
                 lastSelected = passwordsAdapter.getItem(position);
-                itemPosition = position;
+
                 // Show the pop-up menu
                 showPopupMenu(view);
                 return true;
             }
         });
-
-        /*Password p1 = new Password("Youtube", "password");
-        Password p2 = new Password("Facebook", "password");
-        Password p3 = new Password("Discord", "password");
-
-        //phase 2 - add to array list
-        passwordsList = new ArrayList<Password>();
-        passwordsList.add(p1);
-        passwordsList.add(p2);
-        passwordsList.add(p3);*/
 
         passwordsList = new ArrayList<Password>();
         // Initialize the adapter
@@ -96,11 +97,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
 
         DatabaseReference passwordsRef = firebaseDatabase
-                .child("Users")
-                .child(uid)
-                .child("Passwords")
-                .child("Social networks");
-
+                .child("Users").child(uid).child("Passwords").child("Categories").child(String.valueOf(itemPosition)).child(categoryName);
         passwordsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -170,6 +167,8 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
     public void onClick(View v) {
         if (v == floatingActionButton) {
             Intent intent = new Intent(this, PasswordEditActivity.class);
+            intent.putExtra("category", categoryName);
+            intent.putExtra("position", itemPosition);
             startActivityForResult(intent, 1);
         }
     }
@@ -187,7 +186,15 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                     clipboard.setPrimaryClip(clip);
                     Toast.makeText(PasswordsActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
                     return true;
-                } else if (item.getItemId() == R.id.delete) {
+                }
+                if (item.getItemId() == R.id.edit){
+                    Intent intent = new Intent(PasswordsActivity.this, PasswordEditActivity.class);
+                    intent.putExtra("title", lastSelected.getTitle());
+                    intent.putExtra("password", lastSelected.getPassword());
+                    intent.putExtra("position", itemPosition);
+                    startActivityForResult(intent, 0);
+                }
+                if (item.getItemId() == R.id.delete) {
                     // Handle option 2 click (Delete)
                     lastSelected = passwordsAdapter.getItem(itemPosition);
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();

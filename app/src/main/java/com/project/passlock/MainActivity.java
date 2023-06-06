@@ -2,16 +2,21 @@ package com.project.passlock;
 
 import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,6 +31,7 @@ import androidx.navigation.ui.NavigationUI;
 
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
@@ -55,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     FirebaseDatabase firebaseDatabase;
     DatabaseReference userRef;
     Dialog d;
-    int mode = 0;// 0 = Sign up, 1 = Sign in
+    int mode = 0;//0=add mode, 1=edit mode
     ProgressDialog progressDialog;
     private FirebaseAuth firebaseAuth;
 
@@ -64,6 +70,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     TextView textViewUserName;
     String fname;
+
+    FloatingActionButton floatingActionButton;
+    int itemPosition;
+    DatabaseReference firebaseDatabaseRef;
+    int numberOfCategories;
 
     @Override
     public void onStart() {
@@ -78,30 +89,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_activity_main);
 
+        floatingActionButton = findViewById(R.id.fab);
+        floatingActionButton.setOnClickListener(this);
+
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseDatabase.getInstance("https://paock-2a77c-default-rtdb.europe-west1.firebasedatabase.app");
         firebaseDatabase = FirebaseDatabase.getInstance();
         supportInvalidateOptionsMenu();
+        firebaseDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
         lv = (ListView) findViewById(R.id.lv);
         progressDialog = new ProgressDialog(this);
 
 
-        /*DatabaseReference myRef = firebaseDatabase.getReference();
-        myRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                User user = snapshot.getValue(User.class);
-                fname = user.getFirstname();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-
-            }
-        });*/
-        //Intent intent=getIntent();
-        //name = intent.getExtras().getString("fname");
+        //welcome messages with user's name
         textViewUserName = findViewById(R.id.user_name);
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
         DatabaseReference usersRef = firebaseDatabase.getReference("Users/" + uid + "/firstname");//קורא את הערך שנמצא בfirstname לפי הpath, ומשנה את הודעת הwelcome
@@ -120,25 +121,25 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
 
-
-
+        //navigation drawer settings
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                int id = item.getItemId();
-                if (id == R.id.nav_home) {
+                if (item.getItemId() == R.id.nav_home) {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
                     Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
                 }
-                if(id == R.id.nav_passGenerator){
+                if (item.getItemId() == R.id.nav_passGenerator) {
                     Intent intent = new Intent(MainActivity.this, PasswordGenerator.class);
                     startActivity(intent);
                 }
-                if(id == R.id.nav_strength){
+                if (item.getItemId() == R.id.nav_strength) {
                     Intent intent = new Intent(MainActivity.this, PasswordGenerator.class);
                     startActivity(intent);
                 }
-                if(id == R.id.nav_logout){
+                if (item.getItemId() == R.id.nav_logout) {
                     firebaseAuth.signOut();
                     Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
                     item.setTitle("Login");
@@ -153,76 +154,36 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
 
 
-        /*executor = ContextCompat.getMainExecutor(this);
-        biometricPrompt = new BiometricPrompt(MainActivity.this,
-                executor, new BiometricPrompt.AuthenticationCallback() {
-            @Override
-            public void onAuthenticationError(int errorCode,
-                                              @NonNull CharSequence errString) {
-                super.onAuthenticationError(errorCode, errString);
-                Toast.makeText(getApplicationContext(),
-                                "Authentication error: " + errString, Toast.LENGTH_SHORT)
-                        .show();
-            }
-
-            @Override
-            public void onAuthenticationSucceeded(
-                    @NonNull BiometricPrompt.AuthenticationResult result) {
-                super.onAuthenticationSucceeded(result);
-                Toast.makeText(getApplicationContext(),
-                        "Authentication succeeded!", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onAuthenticationFailed() {
-                super.onAuthenticationFailed();
-                Toast.makeText(getApplicationContext(), "Authentication failed",
-                                Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
-
-        promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Authentication login")
-                .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
-                //.setNegativeButtonText("Use account password")
-                .build();
-
-        biometricPrompt.authenticate(promptInfo);*/
-
-
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 lastSelected = categoriesAdapter.getItem(position);
-                if(position == 0){
-                    Intent intent = new Intent(MainActivity.this, PasswordsActivity.class);
-                    startActivity(intent);
-                }
-                //Intent intent = new Intent(MainActivity.this, EditActivity.class);
-                //intent.putExtra("title", lastSelected.getTitle());
+                Intent intent = new Intent(MainActivity.this, PasswordsActivity.class);
+                intent.putExtra("categoryName", lastSelected.getTitle());
+                intent.putExtra("position", position);
                 //startActivity(intent);
-                //startActivityForResult(intent, 0);
+                startActivityForResult(intent, 0);
 
             }
         });
 
-        Category c1 = new Category("Social networks");
-        Category c2 = new Category("Banks");
-        Category c3 = new Category("Work");
-
-        //phase 2 - add to array list
         categoriesList = new ArrayList<Category>();
-        categoriesList.add(c1);
-        categoriesList.add(c2);
-        categoriesList.add(c3);
-
         //phase 3 - create adapter
         categoriesAdapter = new CategoriesAdapter(this, 0, 0, categoriesList);
         //phase 4 reference to listview
         lv = (ListView) findViewById(R.id.lv);
+        lv.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> arg0, View view, int position, long id) {
+                lastSelected = categoriesAdapter.getItem(position);
+                itemPosition = position;
+                // Show the pop-up menu
+                showPopupMenu(view);
+                return true;
+            }
+        });
         lv.setAdapter(categoriesAdapter);
+        loadCategoriesFromFirebase();
     }
 
     @Override
@@ -240,7 +201,126 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onClick(View view) {
-
+    public void onClick(View v) {
+        if (v == floatingActionButton) {
+            Intent intent = new Intent(this, EditActivity.class);
+            startActivityForResult(intent, 1);
+        }
     }
+
+    private void loadCategoriesFromFirebase() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
+        DatabaseReference passwordsRef = firebaseDatabaseRef
+                .child("Users")
+                .child(uid)
+                .child("Passwords")
+                .child("Categories");
+        passwordsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                categoriesList.clear();
+
+                // Retrieve the number of categories
+                if (dataSnapshot.hasChild("number of categories")) {
+                    numberOfCategories = dataSnapshot.child("number of categories").getValue(Integer.class);
+                }
+
+
+                for (int i = 0; i < numberOfCategories; i++) {
+                    if (dataSnapshot.exists()) {
+                        if (dataSnapshot.getKey().equals("number of categories")) {
+                            continue;
+                        }
+                        String categoryTitle = dataSnapshot.child(Integer.toString(i)).child("category").getValue(String.class);
+                        Category categoryItem = new Category(categoryTitle);
+                        categoriesList.add(categoryItem);
+                    }
+                    categoriesAdapter.notifyDataSetChanged();
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getApplicationContext(), "Error loading categories", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 0) {//comes from edit mode
+            if (resultCode == RESULT_OK) {
+                /*String title = data.getExtras().getString("title");
+                String password = data.getExtras().getString("password");
+                lastSelected.setTitle(title);
+                lastSelected.setPassword(password);
+                passwordsAdapter.notifyDataSetChanged();*/
+                Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();
+            } else if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
+            }
+        }
+        if (requestCode == 1) {//comes from add mode
+            if (resultCode == RESULT_OK) {
+                /*String title = data.getExtras().getString("title");
+                String password = data.getExtras().getString("password");
+                Password passwordItem = new Password(title, password);
+                passwordsList.add(passwordItem);
+                passwordsAdapter.notifyDataSetChanged();
+                Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();*/
+            } else if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void showPopupMenu(View view) {
+        PopupMenu popupMenu = new PopupMenu(this, view);
+        MenuInflater inflater = popupMenu.getMenuInflater();
+        inflater.inflate(R.menu.popup_menu, popupMenu.getMenu());
+        popupMenu.setOnMenuItemClickListener(new PopupMenu.OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem item) {
+                // Handle menu item click
+                if (item.getItemId() == R.id.copy) {
+                    ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                    ClipData clip = ClipData.newPlainText("category", lastSelected.getTitle());
+                    clipboard.setPrimaryClip(clip);
+                    Toast.makeText(MainActivity.this, "Copied to clipboard", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                if (item.getItemId() == R.id.edit) {
+                    Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                    intent.putExtra("title", lastSelected.getTitle());
+                    intent.putExtra("position", itemPosition);
+                    startActivityForResult(intent, 0);
+                }
+                if (item.getItemId() == R.id.delete) {
+                    // Handle option 2 click (Delete)
+                    lastSelected = categoriesAdapter.getItem(itemPosition);
+                    String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+                    // Remove title and password from the database
+                    DatabaseReference passwordRef = FirebaseDatabase.getInstance()
+                            .getReference()
+                            .child("Users")
+                            .child(uid)
+                            .child("Passwords")
+                            .child("Categories")
+                            .child(String.valueOf(itemPosition))
+                            .child("category");
+                    passwordRef.removeValue();
+
+                    lastSelected=categoriesAdapter.getItem(itemPosition);
+                    categoriesAdapter.remove(lastSelected);
+                    categoriesAdapter.notifyDataSetChanged();
+                    return true;
+                }
+                return false;
+            }
+        });
+        popupMenu.show();
+    }
+
 }
