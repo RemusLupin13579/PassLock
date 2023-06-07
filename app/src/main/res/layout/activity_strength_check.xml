@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:fontFamily="@font/acme"
+        android:gravity="center"
+        android:text="Check Password's Strength"
+        android:textSize="30dp"
+        android:layout_gravity="center"
+        android:layout_marginTop="30dp"/>
+
+    <EditText
+        android:id="@+id/editTextPassword"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="30dp"
+        android:gravity="center"
+        android:hint="Enter password"
+        android:inputType="textPassword" />
+
+    <!--<Button
+        android:id="@+id/checkButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Check Password"
+        android:layout_marginTop="18dp"
+        android:layout_gravity="center"
+        />!-->
+
+    <View
+        android:id="@+id/colorBar"
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+        android:background="@drawable/strength_bar"
+        android:layout_marginTop="10dp"/>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="40dp">
+
+        <ImageView
+            android:id="@+id/indicator_weak"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/baseline_where_to_vote_24"
+            android:layout_weight="1"
+            android:visibility="visible"/>
+        <ImageView
+            android:id="@+id/indicator_medium"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/baseline_where_to_vote_24"
+            android:layout_weight="1"
+            android:visibility="invisible"/>
+        <ImageView
+            android:id="@+id/indicator_strong"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:srcCompat="@drawable/baseline_where_to_vote_24"
+            android:layout_weight="1"
+            android:visibility="invisible"/>
+
+    </LinearLayout>
+
+    <ProgressBar
+        android:id="@+id/dynamicProgressBar"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="10dp"
+
+        android:max="8"
+        android:progress="0"
+        android:progressDrawable="@drawable/progress_bar_dynamic" />
+
+
+
+
+</LinearLayout>

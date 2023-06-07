@@ -2,4 +2,7 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="weakColor">#FF0000</color>     <!-- Red color -->
+    <color name="mediumColor">#FFFF00</color>   <!-- Yellow color -->
+    <color name="strongColor">#00FF00</color>   <!-- Green color -->
 </resources>

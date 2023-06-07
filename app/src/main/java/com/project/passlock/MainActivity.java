@@ -138,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     startActivity(intent);
                 }
                 if (item.getItemId() == R.id.nav_strength) {
-                    Intent intent = new Intent(MainActivity.this, PasswordGenerator.class);
+                    Intent intent = new Intent(MainActivity.this, StrengthCheck.class);
                     startActivity(intent);
                 }
                 if (item.getItemId() == R.id.nav_logout) {

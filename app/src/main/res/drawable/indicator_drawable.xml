@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- indicator_drawable.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#FF0000" /> <!-- Set the desired color for the indicator -->
+    <corners android:radius="5dp" /> <!-- Set the desired corner radius for the indicator -->
+</shape>
