@@ -33,10 +33,11 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
     private DatabaseReference firebaseDatabase;
     int mode = 0;//0=add mode, 1=edit mode
     int position;
-    String categoryIndex;
-    String category;
+    int categoryIndex;
+    String categoryName;
     private int passwordIndexNum = -1;
     private String categoryIndexNum;
+    String title;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,17 +56,19 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
         //connect to intent if its edit mode
         Intent intent = getIntent();
         if (intent.getExtras() != null) {
-            if (intent.getExtras().getString("title") != null) {
-                mode = 1;
-                String title = intent.getExtras().getString("title");
+            if (intent.getExtras().getString("editMode") != null) {
+                mode = 1;//edit mode
+                categoryName = intent.getExtras().getString("categoryName");
+                title = intent.getExtras().getString("title");
                 String password = intent.getExtras().getString("password");
-                position = intent.getExtras().getInt("Passposition");
+                position = intent.getExtras().getInt("passPosition");
+                categoryIndex = intent.getExtras().getInt("categoryPosition");
                 etTitle.setText(title);
                 etPassword.setText(password);
             }
-            if (intent.getExtras().getString("category") != null) {
-                mode = 0;
-                category = intent.getExtras().getString("category");
+            if (intent.getExtras().getString("addMode") != null) {
+                mode = 0;//add mode
+                categoryName = intent.getExtras().getString("category");
                 categoryIndexNum = String.valueOf(intent.getExtras().getInt("position"));
                 //Toast.makeText(this, "category: " + category + " position: " + categoryIndexNum, Toast.LENGTH_LONG).show();
 
@@ -97,11 +100,11 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
                     getPasswordIndex(new PasswordIndexCallback() {
                         @Override
                         public void onPasswordIndexRetrieved(int passwordIndex) {
-                            firebaseDatabase.child("Users").child(uid).child("Passwords").child("Categories").child(categoryIndexNum).child(category)
+                            firebaseDatabase.child("Users").child(uid).child("Passwords").child("Categories").child(categoryIndexNum).child(categoryName)
                                     .child(Integer.toString(passwordIndex)).child("title").setValue(etTitle.getText().toString());
-                            firebaseDatabase.child("Users").child(uid).child("Passwords").child("Categories").child(categoryIndexNum).child(category)
+                            firebaseDatabase.child("Users").child(uid).child("Passwords").child("Categories").child(categoryIndexNum).child(categoryName)
                                     .child(Integer.toString(passwordIndex)).child("password").setValue(etPassword.getText().toString());
-                            firebaseDatabase.child("Users").child(uid).child("Passwords").child("Categories").child(categoryIndexNum).child(category)
+                            firebaseDatabase.child("Users").child(uid).child("Passwords").child("Categories").child(categoryIndexNum).child(categoryName)
                                     .child("number of passwords").setValue(passwordIndex + 1);
 
                         }
@@ -115,34 +118,33 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
                     Toast.makeText(this, "Please fill all fields", Toast.LENGTH_LONG).show();
             } else if (mode == 1) {//edit mode
                 String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
-                getPasswordIndex(new PasswordIndexCallback() {
-                    @Override
-                    public void onPasswordIndexRetrieved(int passwordIndex) {
-                        DatabaseReference passwordRef = firebaseDatabase
-                                .child("Users")
-                                .child(uid)
-                                .child("Passwords")
-                                .child(category)
-                                .child(String.valueOf(position));
 
-                        passwordRef.child("title").setValue(etTitle.getText().toString());
-                        passwordRef.child("password").setValue(etPassword.getText().toString());
+                DatabaseReference passwordRef = firebaseDatabase.child("Users")
+                        .child(uid)
+                        .child("Passwords")
+                        .child("Categories")
+                        .child(Integer.toString(categoryIndex))
+                        .child(categoryName)
+                        .child(String.valueOf(position));
 
-                        Intent intent = new Intent();
-                        setResult(RESULT_OK, intent);
-                        finish();
-                    }
-                });
 
-            } else if (btnCancel == v)//option 2 - cancel-  and go to first screen
+                passwordRef.child("title").setValue(etTitle.getText().toString());
+                passwordRef.child("password").setValue(etPassword.getText().toString());
 
-            {
-                setResult(RESULT_CANCELED, null);
+                Intent intent = new Intent();
+                setResult(RESULT_OK, intent);
                 finish();
-
             }
 
+        } else if (btnCancel == v)//option 2 - cancel-  and go to first screen
+
+        {
+            setResult(RESULT_CANCELED, null);
+            finish();
+
         }
+
+    }
 
     /*public void getCategoryIndex(final CategoryIndexCallback callback) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
@@ -170,14 +172,15 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
                         Toast.makeText(getApplicationContext(), "Error retrieving user's data", Toast.LENGTH_SHORT).show();
                         callback.onCategoryIndexRetrieved(null); // Handle the error
                     }
-                });*/
-    }
+                });
+    }*/
+
 
     private void getPasswordIndex(PasswordIndexCallback passwordIndexCallback) {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
         DatabaseReference usersRef = databaseReference.child("Users").child(uid).child("Passwords").child("Categories")
-                .child(categoryIndexNum).child(category).child("number of passwords");
+                .child(String.valueOf(categoryIndex)).child(categoryName).child("number of passwords");
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {

@@ -16,7 +16,9 @@
         android:id="@+id/ivCategory"
         android:layout_width="50dp"
         android:layout_height="50dp"
-        app:srcCompat="?attr/actionModeCopyDrawable" />
+        android:layout_gravity="center"
+        android:layout_marginLeft="10dp"
+        app:srcCompat="@drawable/baseline_folder_24" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -31,8 +33,9 @@
             android:layout_marginTop="5dp"
             android:fontFamily="@font/arbutus_slab"
             android:text="title"
-            android:textColor="#106B77"
-            android:textSize="35dp" />
+            android:textColor="#125760"
+            android:textSize="35dp"
+/>
 
 
     </LinearLayout>

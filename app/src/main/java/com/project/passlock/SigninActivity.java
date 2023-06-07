@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -108,23 +109,46 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
     @Override
     public void onClick(View v) {
         if (v == customButtonSignIn) {
-            if (customEditTextEmail.getText().toString() != null && customEditTextPassword.getText().toString() != null) {
+            // Check if all fields are filled
+            if (signinValidateFields()) {
+                // All fields are filled, proceed with sign in
                 login();
-            }
-            else {
-                Toast.makeText(getApplicationContext(), "Please fill all fields", Toast.LENGTH_SHORT).show();
+            } else {
+                // Display an error message or handle empty fields
+                Toast.makeText(SigninActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             }
         }
         if (v == newRegister) {
             createRegisterDialog();
         }
         if (v == customButtonSignUp) {
-            if (customEditTextEmail != null && customEditTextPassword != null && customEditTextFirstName != null)
-            register();
+            if (signupValidateFields()) {
+                // All fields are filled, proceed with sign up
+                register();
+            } else {
+                // Display an error message or handle empty fields
+                Toast.makeText(SigninActivity.this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            }
         }
 
     }
+    private boolean signinValidateFields() {
+        String email = customEditTextEmail.getText().toString().trim();
+        String password = customEditTextPassword.getText().toString().trim();
 
+        // Check if any field is empty
+        return !TextUtils.isEmpty(email) && !TextUtils.isEmpty(password);
+    }
+    private boolean signupValidateFields() {
+        String email = customEditTextEmail.getText().toString().trim();
+        String password = customEditTextPassword.getText().toString().trim();
+        String firstName = customEditTextFirstName.getText().toString().trim();
+        String lastName = customEditTextLastName.getText().toString().trim();
+
+        // Check if any field is empty
+        return !TextUtils.isEmpty(email) && !TextUtils.isEmpty(password)
+                && !TextUtils.isEmpty(firstName) && !TextUtils.isEmpty(lastName);
+    }
     private void login() {
         progressDialog1.setMessage("Registering Please Wait...");
         progressDialog1.show();

@@ -16,7 +16,6 @@ import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -44,7 +43,6 @@ import com.google.firebase.database.ValueEventListener;
 import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -72,7 +70,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     PendingIntent pending_intent;
     AlarmManager alarm_manager;
-    Button initialize_notification;
 
     Switch switchView;
     @Override
@@ -87,9 +84,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
         alarm_manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-
-        initialize_notification = findViewById(R.id.btnDaily_tip);
-        initialize_notification.setOnClickListener(this);
 
         //connect to intent if back from edit mode
         Intent Editintent = getIntent();
@@ -119,7 +113,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onDataChange(@NonNull DataSnapshot snapshot) {
                 if (snapshot.exists()) {
                     fname = snapshot.getValue(String.class);
-                    textViewUserName.setText("Hello, " + fname + "!");
+                    textViewUserName.setText("Welcome, " + fname + "!");
                 }
             }
 
@@ -180,8 +174,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 Intent intent = new Intent(MainActivity.this, PasswordsActivity.class);
                 intent.putExtra("categoryName", lastSelected.getTitle());
                 intent.putExtra("position", position);
-                //startActivity(intent);
-                startActivityForResult(intent, 0);
+                startActivity(intent);
+
 
             }
         });

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 
 public class PasswordsActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private String categoryName;
+    String categoryName;
     ListView lv;
     ArrayList<Password> passwordsList;
     PasswordAdapter passwordsAdapter;
@@ -38,9 +38,11 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
     FloatingActionButton floatingActionButton;
 
     DatabaseReference firebaseDatabase;
-    int itemPosition;
+    int categoryPosition;
     int selectedPosition;
     TextView tvCategory;
+
+    int passwordPosition;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +51,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
 
         // Get the category name from the intent
         categoryName = getIntent().getStringExtra("categoryName");
-        itemPosition = getIntent().getIntExtra("position", -1);
+        categoryPosition = getIntent().getIntExtra("position", -1);
 
         tvCategory = (TextView) findViewById(R.id.tvCategory);
         tvCategory.setText(categoryName);
@@ -67,6 +69,10 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                 intent.putExtra("title", lastSelected.getTitle());
                 intent.putExtra("password", lastSelected.getPassword());
                 intent.putExtra("passPosition", position);
+                intent.putExtra("categoryPosition", categoryPosition);
+                intent.putExtra("categoryName", categoryName);
+                intent.putExtra("editMode", "true");
+
                 startActivityForResult(intent, 0);
 
             }
@@ -76,7 +82,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
             @Override
             public boolean onItemLongClick(AdapterView<?> arg0, View view, int position, long id) {
                 lastSelected = passwordsAdapter.getItem(position);
-
+                passwordPosition = position;
                 // Show the pop-up menu
                 showPopupMenu(view);
                 return true;
@@ -97,7 +103,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
 
         DatabaseReference passwordsRef = firebaseDatabase
-                .child("Users").child(uid).child("Passwords").child("Categories").child(String.valueOf(itemPosition)).child(categoryName);
+                .child("Users").child(uid).child("Passwords").child("Categories").child(String.valueOf(categoryPosition)).child(categoryName);
         passwordsRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
@@ -156,8 +162,8 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                 String password = data.getExtras().getString("password");
                 Password passwordItem = new Password(title, password);
                 passwordsList.add(passwordItem);
-                passwordsAdapter.notifyDataSetChanged();
-                Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();*/
+                passwordsAdapter.notifyDataSetChanged();*/
+                Toast.makeText(this, "Password added", Toast.LENGTH_LONG).show();
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
             }
@@ -168,7 +174,8 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         if (v == floatingActionButton) {
             Intent intent = new Intent(this, PasswordEditActivity.class);
             intent.putExtra("category", categoryName);
-            intent.putExtra("position", itemPosition);
+            intent.putExtra("position", categoryPosition);
+            intent.putExtra("addMode", "true");
             startActivityForResult(intent, 1);
         }
     }
@@ -191,12 +198,19 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                     Intent intent = new Intent(PasswordsActivity.this, PasswordEditActivity.class);
                     intent.putExtra("title", lastSelected.getTitle());
                     intent.putExtra("password", lastSelected.getPassword());
-                    intent.putExtra("position", itemPosition);
+                    intent.putExtra("passPosition", passwordPosition);
+                    intent.putExtra("categoryPosition", categoryPosition);
+                    intent.putExtra("categoryName", categoryName);
+                    intent.putExtra("editMode", "true");
+
+                    //intent.putExtra("title", lastSelected.getTitle());
+                    //intent.putExtra("password", lastSelected.getPassword());
+                    //intent.putExtra("position", categoryPosition);
                     startActivityForResult(intent, 0);
                 }
                 if (item.getItemId() == R.id.delete) {
                     // Handle option 2 click (Delete)
-                    lastSelected = passwordsAdapter.getItem(itemPosition);
+                    lastSelected = passwordsAdapter.getItem(categoryPosition);
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
                     // Remove title and password from the database
@@ -206,7 +220,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                             .child(uid)
                             .child("Passwords")
                             .child("Social networks")
-                            .child(Integer.toString(itemPosition));
+                            .child(Integer.toString(categoryPosition));
                     passwordRef.removeValue();
 
                     passwordsAdapter.remove(lastSelected);
