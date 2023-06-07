@@ -74,7 +74,7 @@ public class EditActivity extends AppCompatActivity implements View.OnClickListe
             if (mode == 0) {//add mode
                 if (etTitle.getText().toString().length() > 0) {
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
-                    getCategoryIndex(new CategoryEditCallback() {//קורא את הערך של מספר סיסמאות שמורות, מחזיר 0 אם אין ערך כזה
+                    getCategoryIndex(new CategoryEditCallback() {//קורא את הערך של מספר קטגוריות שמורות, מחזיר 0 אם אין ערך כזה
                         @Override
                         public void onCategoryIndexRetrieved(int categoryIndex) {
                             /*firebaseDatabase.child("Users")
@@ -122,23 +122,27 @@ public class EditActivity extends AppCompatActivity implements View.OnClickListe
             }
             if (mode == 1 && btnSave == v) {//edit mode
                 String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
-                DatabaseReference passwordRef = firebaseDatabase
+                firebaseDatabase
                         .child("Users")
                         .child(uid)
                         .child("Passwords")
                         .child("Categories")
                         .child(String.valueOf(position))
-                        .child("category");
+                        .child("category")
+                        .setValue(etTitle.getText().toString());
 
-                Map<String, Object> updates = new HashMap<>();
-                updates.put(passwordRef.getPath().toString(), etTitle.getText().toString());
-
-                firebaseDatabase.updateChildren(updates); new DatabaseReference.CompletionListener() {
+                firebaseDatabase
+                        .child("Users")
+                        .child(uid)
+                        .child("Passwords")
+                        .child("Categories")
+                        .child(String.valueOf(position)).child("category").setValue(etTitle.getText().toString()); new DatabaseReference.CompletionListener() {
                     @Override
                     public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
                         if (error == null) {
                             Toast.makeText(getApplicationContext(), "Category updated successfully", Toast.LENGTH_LONG).show();
                             Intent intent = new Intent();
+                            intent.putExtra("oldTitle", etTitle.getText().toString());
                             setResult(RESULT_OK, intent);
                             finish();
                         } else {

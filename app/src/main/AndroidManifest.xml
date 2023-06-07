@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <uses-permission android:name="android.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -12,6 +15,15 @@
         android:supportsRtl="false"
         android:theme="@style/Theme.PassLock"
         tools:targetApi="31">
+        <activity
+            android:name=".DailyTip"
+            android:exported="false" />
+
+        <receiver
+            android:name=".Notification_reciever"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity
             android:name=".PasswordEditActivity"
             android:exported="false" />

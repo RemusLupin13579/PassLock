@@ -40,8 +40,6 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
 
-    String firstName;
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -59,7 +57,6 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         customButtonSignIn.setOnClickListener(this);
         newRegister = (TextView) findViewById(R.id.tvNewRegister);
         newRegister.setOnClickListener(this);
-
 
 
         executor = ContextCompat.getMainExecutor(this);
@@ -110,17 +107,24 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
 
     @Override
     public void onClick(View v) {
-        if(v==customButtonSignIn){
-            login();
+        if (v == customButtonSignIn) {
+            if (customEditTextEmail.getText().toString() != null && customEditTextPassword.getText().toString() != null) {
+                login();
+            }
+            else {
+                Toast.makeText(getApplicationContext(), "Please fill all fields", Toast.LENGTH_SHORT).show();
+            }
         }
-        if(v==newRegister){
+        if (v == newRegister) {
             createRegisterDialog();
         }
-        if(v==customButtonSignUp){
+        if (v == customButtonSignUp) {
+            if (customEditTextEmail != null && customEditTextPassword != null && customEditTextFirstName != null)
             register();
         }
 
     }
+
     private void login() {
         progressDialog1.setMessage("Registering Please Wait...");
         progressDialog1.show();
@@ -132,8 +136,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
 
                         if (task.isSuccessful()) {
                             Toast.makeText(SigninActivity.this, "Log in successfully", Toast.LENGTH_SHORT).show();
-                            Intent intent=new Intent(SigninActivity.this,MainActivity.class);
-                            intent.putExtra("fname",firstName);
+                            Intent intent = new Intent(SigninActivity.this, MainActivity.class);
                             startActivity(intent);
                             finish();
                         } else {
@@ -145,6 +148,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
 
                 });
     }
+
     public void createRegisterDialog() {
         d = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
         d.setContentView(R.layout.signup_layout);
@@ -158,6 +162,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         customButtonSignUp.setOnClickListener(this);
         d.show();
     }
+
     private void register() {
 
         progressDialog1.setMessage("Registering Please Wait...");
@@ -169,7 +174,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
                 if (task.isSuccessful()) {
                     Toast.makeText(SigninActivity.this, "Successfully registered", Toast.LENGTH_LONG).show();
                     addUserDetails();
-                    Intent intent=new Intent(SigninActivity.this,MainActivity.class);
+                    Intent intent = new Intent(SigninActivity.this, MainActivity.class);
                     startActivity(intent);
                     finish();
                 } else {
@@ -182,6 +187,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
             }
         });
     }
+
     public void addUserDetails() {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
 

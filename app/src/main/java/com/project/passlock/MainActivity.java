@@ -1,22 +1,26 @@
 package com.project.passlock;
 
-import android.app.Dialog;
+import android.app.AlarmManager;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
-import android.widget.EditText;
+import android.widget.CompoundButton;
 import android.widget.ListView;
 import android.widget.PopupMenu;
+import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,13 +33,9 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -44,6 +44,8 @@ import com.google.firebase.database.ValueEventListener;
 import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -51,17 +53,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     ArrayList<Category> categoriesList;
     CategoriesAdapter categoriesAdapter;
     Category lastSelected;
-    /*private Executor executor;
-    private BiometricPrompt biometricPrompt;
-    private BiometricPrompt.PromptInfo promptInfo;*/
 
-    private Button customButtonSignUp;
-
-    private EditText customEditTextEmail, customEditTextPassword, customEditTextFirstName, customEditTextLastName;
     FirebaseDatabase firebaseDatabase;
-    DatabaseReference userRef;
-    Dialog d;
-    int mode = 0;//0=add mode, 1=edit mode
     ProgressDialog progressDialog;
     private FirebaseAuth firebaseAuth;
 
@@ -75,20 +68,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     int itemPosition;
     DatabaseReference firebaseDatabaseRef;
     int numberOfCategories;
+    String oldName;
 
-    @Override
-    public void onStart() {
-        super.onStart();
-        // Check if user is signed in (non-null) and update UI accordingly.
-        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
-        //updateUI(currentUser);
-    }
+    PendingIntent pending_intent;
+    AlarmManager alarm_manager;
+    Button initialize_notification;
 
+    Switch switchView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_activity_main);
 
+
+        notificationChannel();
+        Intent intent = new Intent(this, Notification_reciever.class);
+        intent.putExtra("context", getApplicationContext().toString());
+
+        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarm_manager = (AlarmManager)getSystemService(ALARM_SERVICE);
+
+        initialize_notification = findViewById(R.id.btnDaily_tip);
+        initialize_notification.setOnClickListener(this);
+
+        //connect to intent if back from edit mode
+        Intent Editintent = getIntent();
+        if (Editintent.getExtras() != null) {
+            oldName = String.valueOf(Editintent.getExtras().getString("oldTitle"));
+
+        }
         floatingActionButton = findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(this);
 
@@ -152,7 +160,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
             }
         });
-
+        View headerView = navigationView.getHeaderView(0);
+        switchView = headerView.findViewById(R.id.sw);
+        switchView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked) {
+                    set_notification_alarm(24 * 60 * 60 * 1000);
+                } else {
+                    cancel_notification_alarm();
+                }
+            }
+        });
 
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -184,6 +203,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         });
         lv.setAdapter(categoriesAdapter);
         loadCategoriesFromFirebase();
+    }
+
+    private void notificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = "Daily Security Tip";
+            String description = "security tip";
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel("Notification", name, importance);
+            channel.setDescription(description);
+
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
+
+    public void set_notification_alarm(long interval) {
+        long triggerAtMillis = System.currentTimeMillis() + interval;//24 שעות מהשעה הנוכחית
+
+        /*
+        Calendar calendar = Calendar.getInstance(); // Get an instance of the Calendar
+        // Set the calendar to midnight (0:0)
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        */
+
+        // Schedule the alarm based on the SDK version
+        if (Build.VERSION.SDK_INT >= 23) {
+            alarm_manager.setRepeating(AlarmManager.RTC_WAKEUP, System.currentTimeMillis(), interval, pending_intent);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            alarm_manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending_intent);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            alarm_manager.setExact(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending_intent);
+        } else {
+            alarm_manager.set(AlarmManager.RTC_WAKEUP, triggerAtMillis, pending_intent);
+        }
+    }
+
+    public void cancel_notification_alarm() {
+        alarm_manager.cancel(pending_intent);
     }
 
     @Override
@@ -301,17 +359,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     lastSelected = categoriesAdapter.getItem(itemPosition);
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
-                    // Remove title and password from the database
+                    // Remove category from the database
                     DatabaseReference passwordRef = FirebaseDatabase.getInstance()
                             .getReference()
                             .child("Users")
                             .child(uid)
                             .child("Passwords")
                             .child("Categories")
-                            .child(String.valueOf(itemPosition))
-                            .child("category");
+                            .child(String.valueOf(itemPosition));
                     passwordRef.removeValue();
 
+                    // Updates number of categories
+                    DatabaseReference passwordNumRef = FirebaseDatabase.getInstance()
+                            .getReference()
+                            .child("Users")
+                            .child(uid)
+                            .child("Passwords")
+                            .child("Categories")
+                            .child("number of categories");
+                    passwordNumRef.setValue(numberOfCategories-1);
+                    updateIndexes();
                     lastSelected=categoriesAdapter.getItem(itemPosition);
                     categoriesAdapter.remove(lastSelected);
                     categoriesAdapter.notifyDataSetChanged();
@@ -321,6 +388,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         popupMenu.show();
+    }
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        //IntentFilter intentFilter = new IntentFilter("ndroid.permission.POST_NOTIFICATIONS");
+        //registerReceiver(, intentFilter);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        //unregisterReceiver(wifiBroadCast);
+    }
+
+    public void updateIndexes(){
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference categoriesRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("Users")
+                .child(uid)
+                .child("Passwords")
+                .child("Categories");
+
+        int indexToDelete = itemPosition;
+
+        categoriesRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                Iterable<DataSnapshot> categorySnapshots = dataSnapshot.getChildren();
+
+                // Store the categories in a list
+                List<DataSnapshot> categoriesList = new ArrayList<>();
+                for (DataSnapshot categorySnapshot : categorySnapshots) {
+                    categoriesList.add(categorySnapshot);
+                }
+
+                // Update the indexes of the remaining categories
+                for (int i = indexToDelete; i < categoriesList.size(); i++) {
+                    DataSnapshot categorySnapshot = categoriesList.get(i);
+                    String categoryKey = String.valueOf(i - 1); // Calculate the new index
+                    String categoryValue = categorySnapshot.getValue(String.class);
+
+                    // Update the category index in the Firebase database
+                    categoriesRef.child(categoryKey).setValue(categoryValue);
+                }
+
+                // Remove the last category entry since its index has changed
+                categoriesRef.child(String.valueOf(categoriesList.size() - 1)).removeValue();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Toast.makeText(MainActivity.this, "Failed to update database data", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
 }
