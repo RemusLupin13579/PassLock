@@ -273,7 +273,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                     //intent.putExtra("position", categoryPosition);
                     startActivityForResult(intent, 0);
                 }
-                if (item.getItemId() == R.id.delete) {
+                /*if (item.getItemId() == R.id.delete) {
                     // Handle option 2 click (Delete)
                     //lastSelected = passwordsAdapter.getItem(categoryPosition);
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -309,7 +309,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                     passwordsAdapter.remove(lastSelected);
                     passwordsAdapter.notifyDataSetChanged();
                     return true;
-                }
+                }*/
                 return false;
             }
         });

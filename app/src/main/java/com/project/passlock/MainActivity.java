@@ -26,6 +26,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -34,6 +35,8 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.navigation.NavigationView;
 import com.google.firebase.auth.FirebaseAuth;
@@ -41,6 +44,8 @@ import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.MutableData;
+import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
 import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
@@ -163,7 +168,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
                 if (isChecked) {
-                    set_notification_alarm(24 * 60 * 60 * 1000);
+                    //set_notification_alarm(24 * 60 * 60 * 1000);
+                    set_notification_alarm(0);
                 } else {
                     cancel_notification_alarm();
                 }
@@ -194,7 +200,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 lastSelected = categoriesAdapter.getItem(position);
                 itemPosition = position;
                 // Show the pop-up menu
-                showPopupMenu(view);
+                //showPopupMenu(view);
                 return true;
             }
         });
@@ -346,12 +352,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     return true;
                 }
                 if (item.getItemId() == R.id.edit) {
-                    Intent intent = new Intent(MainActivity.this, EditActivity.class);
+                    /*Intent intent = new Intent(MainActivity.this, EditActivity.class);
                     intent.putExtra("title", lastSelected.getTitle());
                     intent.putExtra("position", itemPosition);
-                    startActivityForResult(intent, 0);
+                    startActivityForResult(intent, 0);*/
+                    Toast.makeText(MainActivity.this, "In construction", Toast.LENGTH_SHORT).show();
                 }
-                if (item.getItemId() == R.id.delete) {
+                /*if (item.getItemId() == R.id.delete) {
+                    deleteCategory(itemPosition);
                     // Handle option 2 click (Delete)
                     lastSelected = categoriesAdapter.getItem(itemPosition);
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
@@ -380,7 +388,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     categoriesAdapter.remove(lastSelected);
                     categoriesAdapter.notifyDataSetChanged();
                     return true;
-                }
+                }*/
                 return false;
             }
         });
@@ -441,6 +449,58 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             @Override
             public void onCancelled(DatabaseError databaseError) {
                 Toast.makeText(MainActivity.this, "Failed to update database data", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+    private void deleteCategory(int position) {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
+        DatabaseReference categoryRef = FirebaseDatabase.getInstance()
+                .getReference()
+                .child("Users")
+                .child(uid)
+                .child("Passwords")
+                .child("Categories")
+                .child(String.valueOf(position));
+
+        categoryRef.removeValue().addOnCompleteListener(new OnCompleteListener<Void>() {
+            @Override
+            public void onComplete(@NonNull Task<Void> task) {
+                if (task.isSuccessful()) {
+                    // Category deleted successfully, now update "number of categories"
+                    DatabaseReference numOfCategoriesRef = FirebaseDatabase.getInstance()
+                            .getReference()
+                            .child("Users")
+                            .child(uid)
+                            .child("Passwords")
+                            .child("Categories")
+                            .child("number of categories");
+
+                    numOfCategoriesRef.runTransaction(new Transaction.Handler() {
+                        @NonNull
+                        @Override
+                        public Transaction.Result doTransaction(@NonNull MutableData mutableData) {
+                            Integer numberOfCategories = mutableData.getValue(Integer.class);
+                            if (numberOfCategories != null) {
+                                mutableData.setValue(numberOfCategories - 1);
+                            }
+                            return Transaction.success(mutableData);
+                        }
+
+                        @Override
+                        public void onComplete(@Nullable DatabaseError databaseError, boolean committed, @Nullable DataSnapshot dataSnapshot) {
+                            if (committed) {
+                                Toast.makeText(getApplicationContext(), "Category deleted", Toast.LENGTH_SHORT).show();
+
+                            } else {
+                                Toast.makeText(getApplicationContext(), "Error updating data", Toast.LENGTH_SHORT).show();
+                            }
+                        }
+                    });
+                } else {
+                    Toast.makeText(getApplicationContext(), "Error updating data", Toast.LENGTH_SHORT).show();
+
+                }
             }
         });
     }

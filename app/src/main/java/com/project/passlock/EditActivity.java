@@ -131,25 +131,26 @@ public class EditActivity extends AppCompatActivity implements View.OnClickListe
                         .child("category")
                         .setValue(etTitle.getText().toString());
 
-                firebaseDatabase
+                /*DatabaseReference oldTitleRef = firebaseDatabase
                         .child("Users")
                         .child(uid)
                         .child("Passwords")
                         .child("Categories")
-                        .child(String.valueOf(position)).child("category").setValue(etTitle.getText().toString()); new DatabaseReference.CompletionListener() {
+                        .child(String.valueOf(position))
+                        .child(title);
+                oldTitleRef.setValue(etTitle.getText().toString()); new DatabaseReference.CompletionListener() {
                     @Override
                     public void onComplete(@Nullable DatabaseError error, @NonNull DatabaseReference ref) {
                         if (error == null) {
                             Toast.makeText(getApplicationContext(), "Category updated successfully", Toast.LENGTH_LONG).show();
                             Intent intent = new Intent();
-                            intent.putExtra("oldTitle", etTitle.getText().toString());
                             setResult(RESULT_OK, intent);
                             finish();
                         } else {
                             Toast.makeText(getApplicationContext(), "Failed to update category", Toast.LENGTH_LONG).show();
                         }
                     }
-                };
+                };*/
 
                 Intent intent = new Intent();
                 setResult(RESULT_OK, intent);
