@@ -144,7 +144,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 if (item.getItemId() == R.id.nav_logout) {
                     firebaseAuth.signOut();
                     Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
-                    item.setTitle("Login");
                     Intent intent = new Intent(MainActivity.this, SigninActivity.class);
                     startActivity(intent);
                     finish();
