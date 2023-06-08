@@ -1,9 +1,7 @@
 package com.project.passlock;
 
 public class Password {
-
     private String title, password;
-
 
     public Password() {
 

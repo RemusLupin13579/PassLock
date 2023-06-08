@@ -47,135 +47,57 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.MutableData;
 import com.google.firebase.database.Transaction;
 import com.google.firebase.database.ValueEventListener;
-import com.project.passlock.databinding.ActivityMenuDrawerBinding;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
-
-    ListView lv;
+    ListView lv;//category list view
     ArrayList<Category> categoriesList;
     CategoriesAdapter categoriesAdapter;
-    Category lastSelected;
-
-    FirebaseDatabase firebaseDatabase;
+    Category lastSelected;//representing an item(Category) from the list view
     ProgressDialog progressDialog;
-    private FirebaseAuth firebaseAuth;
-
-    private AppBarConfiguration mAppBarConfiguration;
-    private ActivityMenuDrawerBinding binding;
-
-    TextView textViewUserName;
-    String fname;
-
-    FloatingActionButton floatingActionButton;
-    int itemPosition;
+    FirebaseDatabase firebaseDatabase;
     DatabaseReference firebaseDatabaseRef;
+    private FirebaseAuth firebaseAuth;
+    TextView textViewUserName;
+    String fname;//will read current user's name from firebase
+    FloatingActionButton floatingActionButton;
+    int itemPosition;//position of category in the list view
     int numberOfCategories;
-    String oldName;
-
     PendingIntent pending_intent;
     AlarmManager alarm_manager;
     Switch switchView;
-
-    boolean doubleBackToExitPressedOnce = false;
+    boolean doubleBackToExitPressedOnce = false;//default state for double-tap-to-exit
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_activity_main);
 
-
-        notificationChannel();
-        Intent intent = new Intent(this, Notification_reciever.class);
-        intent.putExtra("context", getApplicationContext().toString());
-
-        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        alarm_manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-
-        //connect to intent if back from edit mode
-        Intent Editintent = getIntent();
-        if (Editintent.getExtras() != null) {
-            oldName = String.valueOf(Editintent.getExtras().getString("oldTitle"));
-
-        }
         floatingActionButton = findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(this);
 
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseDatabase.getInstance("https://paock-2a77c-default-rtdb.europe-west1.firebasedatabase.app");
         firebaseDatabase = FirebaseDatabase.getInstance();
-        supportInvalidateOptionsMenu();
         firebaseDatabaseRef = FirebaseDatabase.getInstance().getReference();
 
-        lv = (ListView) findViewById(R.id.lv);
         progressDialog = new ProgressDialog(this);
+        supportInvalidateOptionsMenu();
 
+        welcomeUserMessage();
 
-        //welcome messages with user's name
-        textViewUserName = findViewById(R.id.user_name);
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
-        DatabaseReference usersRef = firebaseDatabase.getReference("Users/" + uid + "/firstname");//קורא את הערך שנמצא בfirstname לפי הpath, ומשנה את הודעת הwelcome
-        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot snapshot) {
-                if (snapshot.exists()) {
-                    fname = snapshot.getValue(String.class);
-                    textViewUserName.setText("Welcome, " + fname + "!");
-                }
-            }
+        NavigationViewSettings();
+        notificationSettings();
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(getApplicationContext(), "Error retrieving user's first name", Toast.LENGTH_SHORT).show();
-            }
-        });
+        listViewAndAdapterSettings();
 
-        //navigation drawer settings
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.nav_home) {
-                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                    startActivity(intent);
-                    Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
-                }
-                if (item.getItemId() == R.id.nav_passGenerator) {
-                    Intent intent = new Intent(MainActivity.this, PasswordGenerator.class);
-                    startActivity(intent);
-                }
-                if (item.getItemId() == R.id.nav_strength) {
-                    Intent intent = new Intent(MainActivity.this, StrengthCheck.class);
-                    startActivity(intent);
-                }
-                if (item.getItemId() == R.id.nav_logout) {
-                    firebaseAuth.signOut();
-                    Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(MainActivity.this, SigninActivity.class);
-                    startActivity(intent);
-                    finish();
-                }
-                DrawerLayout drawerLayout = findViewById(R.id.nav_drawer_layout);
-                drawerLayout.closeDrawer(GravityCompat.START);
-                return true;
-            }
-        });
-        View headerView = navigationView.getHeaderView(0);
-        switchView = headerView.findViewById(R.id.sw);
-        switchView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                if (isChecked) {
-                    //set_notification_alarm(24 * 60 * 60 * 1000);
-                    set_notification_alarm(0);
-                } else {
-                    cancel_notification_alarm();
-                }
-            }
-        });
+        loadCategoriesFromFirebase();
+    }
 
+    private void listViewAndAdapterSettings() {
+        lv = (ListView) findViewById(R.id.lv);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -184,8 +106,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 intent.putExtra("categoryName", lastSelected.getTitle());
                 intent.putExtra("position", position);
                 startActivity(intent);
-
-
             }
         });
 
@@ -205,7 +125,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         lv.setAdapter(categoriesAdapter);
-        loadCategoriesFromFirebase();
+    }
+
+    public void welcomeUserMessage(){
+        //welcome message with user's name
+        textViewUserName = findViewById(R.id.user_name);
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
+        DatabaseReference usersRef = firebaseDatabase.getReference("Users/" + uid + "/firstname");//קורא את הערך שנמצא בfirstname לפי הpath, ומשנה את הודעת הwelcome
+        usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                if (snapshot.exists()) {
+                    fname = snapshot.getValue(String.class);
+                    textViewUserName.setText("Welcome, " + fname + "!");
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(getApplicationContext(), "Error retrieving user's first name", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    @Override
+    public void onClick(View v) {
+        if (v == floatingActionButton) {
+            Intent intent = new Intent(this, EditActivity.class);
+            startActivityForResult(intent, 1);
+        }
+    }
+
+    private void notificationSettings() {
+        notificationChannel();
+        Intent intent = new Intent(this, Notification_reciever.class);
+        intent.putExtra("context", getApplicationContext().toString());
+
+        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarm_manager = (AlarmManager)getSystemService(ALARM_SERVICE);
     }
 
     private void notificationChannel() {
@@ -253,21 +210,58 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         getMenuInflater().inflate(R.menu.menu_drawer, menu);
         return true;
     }
-
-    @Override
+    public void NavigationViewSettings(){
+        //navigation drawer settings
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                if (item.getItemId() == R.id.nav_home) {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                    Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
+                }
+                if (item.getItemId() == R.id.nav_passGenerator) {
+                    Intent intent = new Intent(MainActivity.this, PasswordGenerator.class);
+                    startActivity(intent);
+                }
+                if (item.getItemId() == R.id.nav_strength) {
+                    Intent intent = new Intent(MainActivity.this, StrengthCheck.class);
+                    startActivity(intent);
+                }
+                if (item.getItemId() == R.id.nav_logout) {
+                    firebaseAuth.signOut();
+                    Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(MainActivity.this, SigninActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+                DrawerLayout drawerLayout = findViewById(R.id.nav_drawer_layout);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                return true;
+            }
+        });
+        View headerView = navigationView.getHeaderView(0);
+        switchView = headerView.findViewById(R.id.sw);
+        switchView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked) {
+                    //set_notification_alarm(24 * 60 * 60 * 1000);
+                    set_notification_alarm(0);
+                } else {
+                    cancel_notification_alarm();
+                }
+            }
+        });
+    }
+    /*@Override
     public boolean onSupportNavigateUp() {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_menu_drawer);
+        AppBarConfiguration mAppBarConfiguration = null;
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
-    }
-
-    @Override
-    public void onClick(View v) {
-        if (v == floatingActionButton) {
-            Intent intent = new Intent(this, EditActivity.class);
-            startActivityForResult(intent, 1);
-        }
-    }
+    }*/
 
     private void loadCategoriesFromFirebase() {
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
@@ -312,11 +306,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 0) {//comes from edit mode
             if (resultCode == RESULT_OK) {
-                /*String title = data.getExtras().getString("title");
-                String password = data.getExtras().getString("password");
-                lastSelected.setTitle(title);
-                lastSelected.setPassword(password);
-                passwordsAdapter.notifyDataSetChanged();*/
                 Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
@@ -324,12 +313,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
         if (requestCode == 1) {//comes from add mode
             if (resultCode == RESULT_OK) {
-                /*String title = data.getExtras().getString("title");
-                String password = data.getExtras().getString("password");
-                Password passwordItem = new Password(title, password);
-                passwordsList.add(passwordItem);
-                passwordsAdapter.notifyDataSetChanged();
-                Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();*/
+                Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
             }
@@ -393,20 +377,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         });
         popupMenu.show();
-    }
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        //IntentFilter intentFilter = new IntentFilter("ndroid.permission.POST_NOTIFICATIONS");
-        //registerReceiver(, intentFilter);
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        //unregisterReceiver(wifiBroadCast);
     }
 
     public void updateIndexes(){
@@ -506,7 +476,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @Override
-    public void onBackPressed() {
+    public void onBackPressed() {//דורש לחיצה כפולה על 'חזור' בשביל לא לצאת בטעות מהאפליקציה
         if (doubleBackToExitPressedOnce) {
             super.onBackPressed();
             return;

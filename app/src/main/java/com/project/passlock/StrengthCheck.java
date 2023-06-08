@@ -37,92 +37,45 @@ public class StrengthCheck extends AppCompatActivity {
     ImageView indicator_weak, indicator_meduim, indicator_strong;
     PendingIntent pending_intent;
     AlarmManager alarm_manager;
+    Switch switchView;
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_activity_strength);
 
-        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        Switch switchView;
-        notificationChannel();
-        Intent intent = new Intent(this, Notification_reciever.class);
-        intent.putExtra("context", getApplicationContext().toString());
-
-        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-        indicator_weak = findViewById(R.id.indicator_weak);
-        indicator_meduim = findViewById(R.id.indicator_medium);
-        indicator_strong = findViewById(R.id.indicator_strong);
-
-
-        dynamicProgressBar = findViewById(R.id.dynamicProgressBar);
-
-        editTextPassword = findViewById(R.id.editTextPassword);
-        colorBar = findViewById(R.id.colorBar);
+        resourcesReferencesToId();//findviewbyid for all the relevant resources
 
         editTextPassword.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
                 dynamicProgressBar.setProgress(dynamicProgressBar.getProgress()+1);
             }
-
             @Override
             public void onTextChanged(CharSequence s, int start, int before, int count) {
                 updatePasswordStrength(s.toString());
 
             }
-
             @Override
             public void afterTextChanged(Editable s) {
                 // Not used
             }
         });
 
-        //navigation drawer settings
-        NavigationView navigationView = findViewById(R.id.nav_view);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-                if (item.getItemId() == R.id.nav_home) {
-                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-                    startActivity(intent);
-                    Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
-                }
-                if (item.getItemId() == R.id.nav_passGenerator) {
-                    Intent intent = new Intent(getApplicationContext(), PasswordGenerator.class);
-                    startActivity(intent);
-                }
-                if (item.getItemId() == R.id.nav_strength) {
-                    Intent intent = new Intent(getApplicationContext(), StrengthCheck.class);
-                    startActivity(intent);
-                }
-                if (item.getItemId() == R.id.nav_logout) {
-                    firebaseAuth.signOut();
-                    Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(getApplicationContext(), SigninActivity.class);
-                    startActivity(intent);
-                    finish();
-                }
-                DrawerLayout drawerLayout = findViewById(R.id.nav_drawer_layout);
-                drawerLayout.closeDrawer(GravityCompat.START);
-                return true;
-            }
-        });
-        View headerView = navigationView.getHeaderView(0);
-        switchView = headerView.findViewById(R.id.sw);
-        switchView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
-            @Override
-            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
-                if (isChecked) {
-                    set_notification_alarm(24 * 60 * 60 * 1000);
-                } else {
-                    cancel_notification_alarm();
-                }
-            }
-        });
+        NavigationViewSettings();
+        notificationSettings();
+    }
 
+    private void resourcesReferencesToId() {
+        indicator_weak = findViewById(R.id.indicator_weak);
+        indicator_meduim = findViewById(R.id.indicator_medium);
+        indicator_strong = findViewById(R.id.indicator_strong);
+
+        dynamicProgressBar = findViewById(R.id.dynamicProgressBar);
+
+        editTextPassword = findViewById(R.id.editTextPassword);
+        colorBar = findViewById(R.id.colorBar);
     }
 
     private void updatePasswordStrength(String password) {
@@ -161,8 +114,6 @@ public class StrengthCheck extends AppCompatActivity {
         colorBar.setBackground(gradientDrawable);
 
     }
-
-
 
     private int calculatePasswordStrength(String password) {
         int strengthPercentage = 0;
@@ -206,6 +157,61 @@ public class StrengthCheck extends AppCompatActivity {
         }
         return false;
     }
+    private void NavigationViewSettings() {
+        //navigation drawer settings
+        NavigationView navigationView = findViewById(R.id.nav_view);
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                if (item.getItemId() == R.id.nav_home) {
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                    Toast.makeText(getApplicationContext(), "Home", Toast.LENGTH_SHORT).show();
+                }
+                if (item.getItemId() == R.id.nav_passGenerator) {
+                    Intent intent = new Intent(getApplicationContext(), PasswordGenerator.class);
+                    startActivity(intent);
+                }
+                if (item.getItemId() == R.id.nav_strength) {
+                    Intent intent = new Intent(getApplicationContext(), StrengthCheck.class);
+                    startActivity(intent);
+                }
+                if (item.getItemId() == R.id.nav_logout) {
+                    firebaseAuth.signOut();
+                    Toast.makeText(getApplicationContext(), "Logged out", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(getApplicationContext(), SigninActivity.class);
+                    startActivity(intent);
+                    finish();
+                }
+                DrawerLayout drawerLayout = findViewById(R.id.nav_drawer_layout);
+                drawerLayout.closeDrawer(GravityCompat.START);
+                return true;
+            }
+        });
+        View headerView = navigationView.getHeaderView(0);
+        switchView = headerView.findViewById(R.id.sw);
+        switchView.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton compoundButton, boolean isChecked) {
+                if (isChecked) {
+                    set_notification_alarm(24 * 60 * 60 * 1000);
+                } else {
+                    cancel_notification_alarm();
+                }
+            }
+        });
+    }
+
+
+    private void notificationSettings() {
+        notificationChannel();
+        Intent intent = new Intent(this, Notification_reciever.class);
+        intent.putExtra("context", getApplicationContext().toString());
+
+        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+    }
+
     private void notificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             CharSequence name = "Daily Security Tip";

@@ -35,21 +35,14 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
     String password;
     PendingIntent pending_intent;
     AlarmManager alarm_manager;
-
-
+    Switch switchView;
+    FirebaseAuth firebaseAuth;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_activity_password_generator);
 
-        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        Switch switchView;
-        notificationChannel();
-        Intent intent = new Intent(this, Notification_reciever.class);
-        intent.putExtra("context", getApplicationContext().toString());
-
-        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+        firebaseAuth = FirebaseAuth.getInstance();
 
         btnGenerate = findViewById(R.id.btnGeneratePass);
         btnGenerate.setOnClickListener(this);
@@ -68,7 +61,40 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
             }
         });
 
+        NavigationViewSettings();
+        notificationSettings();
+    }
 
+    private static char[] generatePassword(int length) {
+        String capitalCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        String lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
+        String specialCharacters = "!@#$";
+        String numbers = "1234567890";
+        String combinedChars = capitalCaseLetters + lowerCaseLetters + specialCharacters + numbers;
+        Random random = new Random();
+        char[] password = new char[length];
+
+        password[0] = lowerCaseLetters.charAt(random.nextInt(lowerCaseLetters.length()));
+        password[1] = capitalCaseLetters.charAt(random.nextInt(capitalCaseLetters.length()));
+        password[2] = specialCharacters.charAt(random.nextInt(specialCharacters.length()));
+        password[3] = numbers.charAt(random.nextInt(numbers.length()));
+
+        for(int i = 4; i< length ; i++) {
+            password[i] = combinedChars.charAt(random.nextInt(combinedChars.length()));
+        }
+        return password;
+    }
+
+    private void notificationSettings() {
+        notificationChannel();
+        Intent intent = new Intent(this, Notification_reciever.class);
+        intent.putExtra("context", getApplicationContext().toString());
+
+        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+    }
+
+    private void NavigationViewSettings() {
         //navigation drawer settings
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -111,7 +137,6 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
                 }
             }
         });
-
     }
 
     private void notificationChannel() {
@@ -159,23 +184,5 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
         tvHoraot.setVisibility(View.VISIBLE);
     }
 
-    private static char[] generatePassword(int length) {
-        String capitalCaseLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        String lowerCaseLetters = "abcdefghijklmnopqrstuvwxyz";
-        String specialCharacters = "!@#$";
-        String numbers = "1234567890";
-        String combinedChars = capitalCaseLetters + lowerCaseLetters + specialCharacters + numbers;
-        Random random = new Random();
-        char[] password = new char[length];
 
-        password[0] = lowerCaseLetters.charAt(random.nextInt(lowerCaseLetters.length()));
-        password[1] = capitalCaseLetters.charAt(random.nextInt(capitalCaseLetters.length()));
-        password[2] = specialCharacters.charAt(random.nextInt(specialCharacters.length()));
-        password[3] = numbers.charAt(random.nextInt(numbers.length()));
-
-        for(int i = 4; i< length ; i++) {
-            password[i] = combinedChars.charAt(random.nextInt(combinedChars.length()));
-        }
-        return password;
-    }
 }

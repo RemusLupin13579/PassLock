@@ -46,32 +46,23 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
     PasswordAdapter passwordsAdapter;
     Password lastSelected;
     FloatingActionButton floatingActionButton;
-
     DatabaseReference firebaseDatabase;
     int categoryPosition;
-    int selectedPosition;
     TextView tvCategory;
-
     int passwordPosition;
-
     PendingIntent pending_intent;
     AlarmManager alarm_manager;
+    Switch switchView;
+    FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.nav_activity_passwords);
 
-        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
-        Switch switchView;
-        notificationChannel();
-        Intent intent = new Intent(this, Notification_reciever.class);
-        intent.putExtra("context", getApplicationContext().toString());
+        NavigationViewSettings();
+        notificationSettings();
 
-        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
-        alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
-
-
-        // Get the category name from the intent
+        // Get the category name and position from the intent
         categoryName = getIntent().getStringExtra("categoryName");
         categoryPosition = getIntent().getIntExtra("position", -1);
 
@@ -82,6 +73,13 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         floatingActionButton = findViewById(R.id.fab);
         floatingActionButton.setOnClickListener(this);
 
+        passwordsListViewSettings();
+        // Load passwords from Firebase database to listview
+        loadPasswordsFromFirebase();
+
+    }
+
+    private void passwordsListViewSettings() {
         lv = (ListView) findViewById(R.id.Passlv);
         lv.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
@@ -116,10 +114,51 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         passwordsAdapter = new PasswordAdapter(this, 0, 0, passwordsList);
         // Set the adapter to the ListView
         lv.setAdapter(passwordsAdapter);
-        // Load passwords from Firebase database
-        loadPasswordsFromFirebase();
+    }
 
+    private void loadPasswordsFromFirebase() {
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
 
+        DatabaseReference passwordsRef = firebaseDatabase
+                .child("Users").child(uid).child("Passwords").child("Categories").child(String.valueOf(categoryPosition)).child(categoryName);
+        passwordsRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
+                passwordsList.clear();
+
+                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
+                    // Skip the "number of passwords" value
+                    if (snapshot.getKey().equals("number of passwords")) {
+                        continue;
+                    }
+
+                    String title = snapshot.child("title").getValue(String.class);
+                    String password = snapshot.child("password").getValue(String.class);
+
+                    Password passwordItem = new Password(title, password);
+                    passwordsList.add(passwordItem);
+                }
+
+                passwordsAdapter.notifyDataSetChanged();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                Toast.makeText(PasswordsActivity.this, "Error loading passwords", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void notificationSettings() {
+        notificationChannel();
+        Intent intent = new Intent(this, Notification_reciever.class);
+        intent.putExtra("context", getApplicationContext().toString());
+
+        pending_intent = PendingIntent.getBroadcast(getApplicationContext(), 0, intent, PendingIntent.FLAG_IMMUTABLE);
+        alarm_manager = (AlarmManager) getSystemService(ALARM_SERVICE);
+    }
+
+    private void NavigationViewSettings() {
         //navigation drawer settings
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
@@ -164,38 +203,6 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         });
     }
 
-    private void loadPasswordsFromFirebase() {
-        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
-
-        DatabaseReference passwordsRef = firebaseDatabase
-                .child("Users").child(uid).child("Passwords").child("Categories").child(String.valueOf(categoryPosition)).child(categoryName);
-        passwordsRef.addValueEventListener(new ValueEventListener() {
-            @Override
-            public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
-                passwordsList.clear();
-
-                for (DataSnapshot snapshot : dataSnapshot.getChildren()) {
-                    // Skip the "number of passwords" value
-                    if (snapshot.getKey().equals("number of passwords")) {
-                        continue;
-                    }
-
-                    String title = snapshot.child("title").getValue(String.class);
-                    String password = snapshot.child("password").getValue(String.class);
-
-                    Password passwordItem = new Password(title, password);
-                    passwordsList.add(passwordItem);
-                }
-
-                passwordsAdapter.notifyDataSetChanged();
-            }
-
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-                Toast.makeText(PasswordsActivity.this, "Error loading passwords", Toast.LENGTH_SHORT).show();
-            }
-        });
-    }
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.password_add_item, menu);
@@ -211,11 +218,6 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == 0) {//comes from edit mode
             if (resultCode == RESULT_OK) {
-                /*String title = data.getExtras().getString("title");
-                String password = data.getExtras().getString("password");
-                lastSelected.setTitle(title);
-                lastSelected.setPassword(password);
-                passwordsAdapter.notifyDataSetChanged();*/
                 Toast.makeText(this, "data updated", Toast.LENGTH_LONG).show();
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
@@ -223,11 +225,6 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
         }
         if (requestCode == 1) {//comes from add mode
             if (resultCode == RESULT_OK) {
-                /*String title = data.getExtras().getString("title");
-                String password = data.getExtras().getString("password");
-                Password passwordItem = new Password(title, password);
-                passwordsList.add(passwordItem);
-                passwordsAdapter.notifyDataSetChanged();*/
                 Toast.makeText(this, "Password added", Toast.LENGTH_LONG).show();
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(this, "canceled", Toast.LENGTH_LONG).show();
@@ -267,10 +264,6 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                     intent.putExtra("categoryPosition", categoryPosition);
                     intent.putExtra("categoryName", categoryName);
                     intent.putExtra("editMode", "true");
-
-                    //intent.putExtra("title", lastSelected.getTitle());
-                    //intent.putExtra("password", lastSelected.getPassword());
-                    //intent.putExtra("position", categoryPosition);
                     startActivityForResult(intent, 0);
                 }
                 /*if (item.getItemId() == R.id.delete) {

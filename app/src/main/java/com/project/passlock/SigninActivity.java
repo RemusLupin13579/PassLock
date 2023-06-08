@@ -59,51 +59,8 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         newRegister = (TextView) findViewById(R.id.tvNewRegister);
         newRegister.setOnClickListener(this);
 
+        biometricAuthentication();
 
-        executor = ContextCompat.getMainExecutor(this);
-        biometricPrompt = new BiometricPrompt(SigninActivity.this,
-                executor, new BiometricPrompt.AuthenticationCallback() {
-            @Override
-            public void onAuthenticationError(int errorCode,
-                                              @NonNull CharSequence errString) {
-                super.onAuthenticationError(errorCode, errString);
-                Toast.makeText(getApplicationContext(),
-                                "Authentication error: " + errString, Toast.LENGTH_SHORT)
-                        .show();
-                promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                        .setTitle("Authentication login")
-                        .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
-                        //.setNegativeButtonText("Use account password")
-                        .build();
-
-                biometricPrompt.authenticate(promptInfo);
-            }
-
-            @Override
-            public void onAuthenticationSucceeded(
-                    @NonNull BiometricPrompt.AuthenticationResult result) {
-                super.onAuthenticationSucceeded(result);
-                Toast.makeText(getApplicationContext(),
-                        "Authentication succeeded!", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onAuthenticationFailed() {
-                super.onAuthenticationFailed();
-                Toast.makeText(getApplicationContext(), "Authentication failed",
-                                Toast.LENGTH_SHORT)
-                        .show();
-
-            }
-        });
-
-        promptInfo = new BiometricPrompt.PromptInfo.Builder()
-                .setTitle("Authentication login")
-                .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
-                //.setNegativeButtonText("Use account password")
-                .build();
-
-        biometricPrompt.authenticate(promptInfo);
     }
 
     @Override
@@ -188,10 +145,8 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
     }
 
     private void register() {
-
         progressDialog1.setMessage("Registering Please Wait...");
         progressDialog1.show();
-
         firebaseAuth.createUserWithEmailAndPassword(customEditTextEmail.getText().toString(), customEditTextPassword.getText().toString()).addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
             @Override
             public void onComplete(Task<AuthResult> task) {
@@ -219,5 +174,50 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         User user = new User(uid, customEditTextEmail.getText().toString(), customEditTextFirstName.getText().toString(), customEditTextLastName.getText().toString());//יוצר משתמש חדש
         dbRef.child("Users").child(uid).setValue(user);//מוסיף את המשתמש החדש לבסיס נתונים לפי הPath:יוזרז>uid>יוצר משתמש חדש
     }
+    private void biometricAuthentication() {
+        executor = ContextCompat.getMainExecutor(this);
+        biometricPrompt = new BiometricPrompt(SigninActivity.this,
+                executor, new BiometricPrompt.AuthenticationCallback() {
+            @Override
+            public void onAuthenticationError(int errorCode,
+                                              @NonNull CharSequence errString) {
+                super.onAuthenticationError(errorCode, errString);
+                Toast.makeText(getApplicationContext(),
+                                "Authentication error: " + errString, Toast.LENGTH_SHORT)
+                        .show();
+                promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                        .setTitle("Authentication login")
+                        .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
+                        //.setNegativeButtonText("Use account password")
+                        .build();
 
+                biometricPrompt.authenticate(promptInfo);
+            }
+
+            @Override
+            public void onAuthenticationSucceeded(
+                    @NonNull BiometricPrompt.AuthenticationResult result) {
+                super.onAuthenticationSucceeded(result);
+                Toast.makeText(getApplicationContext(),
+                        "Authentication succeeded!", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onAuthenticationFailed() {
+                super.onAuthenticationFailed();
+                Toast.makeText(getApplicationContext(), "Authentication failed",
+                                Toast.LENGTH_SHORT)
+                        .show();
+
+            }
+        });
+
+        promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                .setTitle("Authentication login")
+                .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
+                //.setNegativeButtonText("Use account password")
+                .build();
+
+        biometricPrompt.authenticate(promptInfo);
+    }
 }
