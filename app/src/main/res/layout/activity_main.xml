@@ -9,7 +9,12 @@
     android:fitsSystemWindows="true"
     android:orientation="vertical"
     tools:openDrawer="left">
-
+    <ImageView
+        android:layout_width="20dp"
+        android:layout_height="25dp"
+        android:background="@drawable/baseline_menu_24"
+        android:layout_gravity="start"
+        app:tint="@color/gray" />
     <TextView
         android:id="@+id/user_name"
         android:layout_width="wrap_content"

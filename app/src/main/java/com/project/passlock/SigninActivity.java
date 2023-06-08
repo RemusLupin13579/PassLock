@@ -30,7 +30,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
 
     private EditText customEditTextEmail, customEditTextPassword, customEditTextFirstName, customEditTextLastName;
     private Button customButtonSignUp;
-    TextView newRegister;
+    TextView newRegister, forgotPassword;
     private Button customButtonSignIn;
     Dialog d;
     ProgressDialog progressDialog1;
@@ -40,7 +40,7 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
     private Executor executor;
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
-
+    String emailAddress;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,6 +58,8 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         customButtonSignIn.setOnClickListener(this);
         newRegister = (TextView) findViewById(R.id.tvNewRegister);
         newRegister.setOnClickListener(this);
+        forgotPassword = findViewById(R.id.tvForgotPassword);
+        forgotPassword.setOnClickListener(this);
 
         biometricAuthentication();
 
@@ -77,6 +79,26 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         }
         if (v == newRegister) {
             createRegisterDialog();
+        }
+        if (v == forgotPassword) {
+            FirebaseAuth auth = FirebaseAuth.getInstance();
+            String emailAddress = customEditTextEmail.getText().toString().trim();
+
+            if (!TextUtils.isEmpty(emailAddress)) {
+                auth.sendPasswordResetEmail(emailAddress)
+                        .addOnCompleteListener(new OnCompleteListener<Void>() {
+                            @Override
+                            public void onComplete(@NonNull Task<Void> task) {
+                                if (task.isSuccessful()) {
+                                    Toast.makeText(SigninActivity.this, "Email sent.", Toast.LENGTH_SHORT).show();
+                                } else {
+                                    Toast.makeText(SigninActivity.this, "Failed to send email. Please fill the email address.", Toast.LENGTH_SHORT).show();
+                                }
+                            }
+                        });
+            } else {
+                Toast.makeText(SigninActivity.this, "Please fill the email field", Toast.LENGTH_SHORT).show();
+            }
         }
         if (v == customButtonSignUp) {
             if (signupValidateFields()) {

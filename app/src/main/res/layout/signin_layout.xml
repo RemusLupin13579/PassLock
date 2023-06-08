@@ -58,4 +58,16 @@
         android:textSize="18dp"
         android:textStyle="bold|italic"></TextView>
 
+    <TextView
+        android:id="@+id/tvForgotPassword"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="13dp"
+        android:text="Forgot password?"
+        android:textAllCaps="false"
+        android:textColor="#0F3F9F"
+        android:textSize="17dp"
+        android:textStyle="bold|italic"></TextView>
+
 </LinearLayout>
