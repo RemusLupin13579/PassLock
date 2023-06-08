@@ -275,7 +275,7 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                 }
                 if (item.getItemId() == R.id.delete) {
                     // Handle option 2 click (Delete)
-                    lastSelected = passwordsAdapter.getItem(categoryPosition);
+                    //lastSelected = passwordsAdapter.getItem(categoryPosition);
                     String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
                     // Remove title and password from the database
@@ -284,9 +284,27 @@ public class PasswordsActivity extends AppCompatActivity implements View.OnClick
                             .child("Users")
                             .child(uid)
                             .child("Passwords")
-                            .child("Social networks")
-                            .child(Integer.toString(categoryPosition));
+                            .child("Categories")
+                            .child(String.valueOf(categoryPosition))
+                            .child(categoryName)
+                            .child(Integer.toString(passwordPosition));
                     passwordRef.removeValue();
+
+                    // Reference to number of passwords
+                    DatabaseReference passwordsNumRef = FirebaseDatabase.getInstance()
+                            .getReference()
+                            .child("Users").child(uid).child("Passwords").child("Categories").child(String.valueOf(categoryPosition)).child(categoryName)
+                            .child("number of passwords");
+
+                    // Updating number of passwords to -1 after delete
+                    String numberOfPasswords = String.valueOf(passwordsNumRef);
+                    passwordRef = FirebaseDatabase.getInstance()
+                            .getReference()
+                            .child("Users").child(uid).child("Passwords").child("Categories")
+                            .child(String.valueOf(categoryPosition))
+                            .child(categoryName)
+                            .child("number of passwords");
+                    passwordRef.setValue(Integer.parseInt(numberOfPasswords)-1);
 
                     passwordsAdapter.remove(lastSelected);
                     passwordsAdapter.notifyDataSetChanged();

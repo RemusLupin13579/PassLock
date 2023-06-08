@@ -30,11 +30,12 @@ import java.util.Random;
 
 public class PasswordGenerator extends AppCompatActivity implements View.OnClickListener {
 
-    TextView textViewPassword;
+    TextView textViewPassword, tvHoraot;
     Button btnGenerate;
     String password;
     PendingIntent pending_intent;
     AlarmManager alarm_manager;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +53,8 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
 
         btnGenerate = findViewById(R.id.btnGeneratePass);
         btnGenerate.setOnClickListener(this);
+
+        tvHoraot = findViewById(R.id.tvHoraot);
         textViewPassword = findViewById(R.id.tvPass);
         textViewPassword.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
@@ -153,6 +156,7 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
         password = String.valueOf(generatePassword(20));
         textViewPassword.setText(password);
         textViewPassword.setVisibility(View.VISIBLE);
+        tvHoraot.setVisibility(View.VISIBLE);
     }
 
     private static char[] generatePassword(int length) {

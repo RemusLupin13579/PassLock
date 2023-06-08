@@ -70,7 +70,7 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
                 mode = 0;//add mode
                 categoryName = intent.getExtras().getString("category");
                 categoryIndexNum = String.valueOf(intent.getExtras().getInt("position"));
-                //Toast.makeText(this, "category: " + category + " position: " + categoryIndexNum, Toast.LENGTH_LONG).show();
+                //Toast.makeText(this, "category: " + categoryName + " position: " + categoryIndexNum, Toast.LENGTH_LONG).show();
 
             }
         }
@@ -180,7 +180,7 @@ public class PasswordEditActivity extends AppCompatActivity implements View.OnCl
         String uid = FirebaseAuth.getInstance().getCurrentUser().getUid().toString();
         DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
         DatabaseReference usersRef = databaseReference.child("Users").child(uid).child("Passwords").child("Categories")
-                .child(String.valueOf(categoryIndex)).child(categoryName).child("number of passwords");
+                .child(String.valueOf(categoryIndexNum)).child(categoryName).child("number of passwords");
         usersRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
