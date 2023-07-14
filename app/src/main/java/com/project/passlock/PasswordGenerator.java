@@ -84,6 +84,13 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
         }
         return password;
     }
+    @Override
+    public void onClick(View view) {
+        password = String.valueOf(generatePassword(20));
+        textViewPassword.setText(password);
+        textViewPassword.setVisibility(View.VISIBLE);
+        tvHoraot.setVisibility(View.VISIBLE);
+    }
 
     private void notificationSettings() {
         notificationChannel();
@@ -175,13 +182,6 @@ public class PasswordGenerator extends AppCompatActivity implements View.OnClick
 
     public void cancel_notification_alarm() {
         alarm_manager.cancel(pending_intent);
-    }
-    @Override
-    public void onClick(View view) {
-        password = String.valueOf(generatePassword(20));
-        textViewPassword.setText(password);
-        textViewPassword.setVisibility(View.VISIBLE);
-        tvHoraot.setVisibility(View.VISIBLE);
     }
 
 

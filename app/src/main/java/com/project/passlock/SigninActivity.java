@@ -40,11 +40,13 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
     private Executor executor;
     private BiometricPrompt biometricPrompt;
     private BiometricPrompt.PromptInfo promptInfo;
-    String emailAddress;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.signin_layout);
+
+        isLoggedIn();
 
         firebaseAuth = FirebaseAuth.getInstance();
         FirebaseDatabase.getInstance("https://paock-2a77c-default-rtdb.europe-west1.firebasedatabase.app");
@@ -61,8 +63,22 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
         forgotPassword = findViewById(R.id.tvForgotPassword);
         forgotPassword.setOnClickListener(this);
 
-        biometricAuthentication();
 
+
+
+    }
+
+    public void isLoggedIn() {
+        FirebaseAuth firebaseAuth = FirebaseAuth.getInstance();
+        FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+        if (currentUser != null) {
+            // User is logged in, redirect to the main activity
+            Intent intent = new Intent(SigninActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish(); // Optional: finish the splash screen activity
+        } else {
+            biometricAuthentication();
+        }
     }
 
     @Override
@@ -207,13 +223,15 @@ public class SigninActivity extends AppCompatActivity implements View.OnClickLis
                 Toast.makeText(getApplicationContext(),
                                 "Authentication error: " + errString, Toast.LENGTH_SHORT)
                         .show();
-                promptInfo = new BiometricPrompt.PromptInfo.Builder()
+                /*promptInfo = new BiometricPrompt.PromptInfo.Builder()
                         .setTitle("Authentication login")
                         .setSubtitle("Log in using your fingerprint or PIN").setDeviceCredentialAllowed(true)
                         //.setNegativeButtonText("Use account password")
                         .build();
 
-                biometricPrompt.authenticate(promptInfo);
+                biometricPrompt.authenticate(promptInfo);*/
+                finish();
+                startActivity(getIntent());
             }
 
             @Override

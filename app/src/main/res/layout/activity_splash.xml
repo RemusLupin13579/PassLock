@@ -7,14 +7,12 @@
     android:background="#D84029C5"
     tools:context=".splashActivity">
 
-
-    <ImageView
+    <VideoView
+        android:id="@+id/videoView"
         android:layout_width="150dp"
         android:layout_height="150dp"
         android:layout_centerInParent="true"
-        android:src="@drawable/roundlogo">
-
-    </ImageView>
+        />
 
 
     <TextView

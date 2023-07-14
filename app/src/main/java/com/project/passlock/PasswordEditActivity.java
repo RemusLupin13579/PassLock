@@ -22,10 +22,6 @@ interface PasswordIndexCallback {
     void onPasswordIndexRetrieved(int passwordIndex);
 }
 
-interface CategoryIndexCallback {
-    void onCategoryIndexRetrieved(String categoryIndex);
-}
-
 public class PasswordEditActivity extends AppCompatActivity implements View.OnClickListener {
 
     EditText etTitle, etPassword;
